@@ -63,7 +63,7 @@ string processMarkdownToHTML(const string& markdown) {
                     else if (line[pos] == '*' && pos + 1 < line.size() && line[pos + 1] == '*') {
                         size_t endPos = line.find("**", pos + 2);
                         if (endPos != string::npos) {
-                            html += "<b>" + line.substr(pos + 2, endPos - pos - 2) + "</b>";
+                            html += "<p>" + line.substr(pos + 2, endPos - pos - 2) + "</b>";
                             pos = endPos + 2;
                         }
                         else {
