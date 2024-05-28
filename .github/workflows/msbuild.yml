@@ -1,0 +1,49 @@
+name: MSBuild with Tests
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+env:
+  # Шлях до файлу рішення відносно кореневої папки проекту.
+  SOLUTION_FILE_PATH: mark2.sln
+
+  # Конфігурація збирання.
+  BUILD_CONFIGURATION: Release
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Setup VSTest.console.exe
+      uses: darenm/Setup-VSTest@v1.3
+
+    - name: Додати MSBuild у PATH
+      uses: microsoft/setup-msbuild@v1.0.2
+
+    - name: Build Solution
+      run: msbuild /t:Rebuild /p:Configuration=${{ env.BUILD_CONFIGURATION }} ${{ env.SOLUTION_FILE_PATH }}
+
+    - name: Locate Test DLL
+      id: locate_test_dll
+      run: |
+         echo "##[group]Finding test DLL"
+         $test_dll_path = Get-ChildItem -Path . -Filter "UnitTests.dll" -Recurse | Select-Object -ExpandProperty FullName -First 1
+         if (-not $test_dll_path) {
+         echo "Test DLL not found!"
+         exit 1
+         }
+         echo "Found test DLL at: $test_dll_path"
+         echo "##[endgroup]"
+         echo "::set-output name=test_dll_path::$test_dll_path"
+
+    - name: Run Tests
+      run: vstest.console.exe ${{ steps.locate_test_dll.outputs.test_dll_path }}
